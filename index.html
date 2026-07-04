@@ -1,0 +1,1760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI-Assisted IEP Goal Writing for Co-Teaching Teams</title>
+<style>
+  :root{
+    --primary:#028090;
+    --primary-dark:#016570;
+    --secondary:#00A896;
+    --accent:#02C39A;
+    --ink:#1E2B2B;
+    --muted:#5B6B6B;
+    --card:#F2F8F7;
+    --card-warn:#FCEFEF;
+    --track:#E2E8E8;
+    --dash:#9AA9A9;
+    --white:#FFFFFF;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:Calibri,"Segoe UI",Arial,sans-serif;
+    color:var(--ink);
+    background:#DDEAEA;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{font-family:Cambria,Georgia,"Times New Roman",serif;margin:0;}
+  button{font-family:inherit;cursor:pointer;}
+  .app{
+    max-width:1000px;
+    margin:0 auto;
+    background:var(--white);
+    min-height:100vh;
+    box-shadow:0 0 40px rgba(0,0,0,0.15);
+    display:flex;
+    flex-direction:column;
+  }
+  /* ---------- top bar ---------- */
+  .topbar{
+    background:var(--primary);
+    color:var(--white);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0.7rem 1.25rem;
+    gap:1rem;
+    flex-wrap:wrap;
+  }
+  .topbar .title{font-weight:bold;font-size:0.95rem;}
+  .topbar .right{display:flex;align-items:center;gap:0.75rem;font-size:0.85rem;color:#DFF5F1;}
+  .topbar select{
+    background:var(--primary-dark);
+    color:var(--white);
+    border:1px solid rgba(255,255,255,0.4);
+    border-radius:5px;
+    padding:0.3rem 0.5rem;
+    font-size:0.8rem;
+  }
+  .progress-track{height:6px;background:var(--track);width:100%;}
+  .progress-fill{height:6px;background:var(--accent);width:6.25%;transition:width .3s ease;}
+
+  main{flex:1;padding:2rem 1.75rem 1.5rem;}
+  .screen{display:none;}
+  .screen.active{display:block;animation:fade .25s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+
+  .kicker{
+    text-transform:uppercase;
+    letter-spacing:1.5px;
+    color:var(--secondary);
+    font-weight:bold;
+    font-size:0.75rem;
+    margin-bottom:0.35rem;
+  }
+  .screen h2{color:var(--primary);font-size:1.6rem;margin-bottom:1.1rem;}
+  .lede{color:var(--muted);font-style:italic;margin-bottom:1rem;}
+
+  /* ---------- generic layout helpers ---------- */
+  .grid-2{display:flex;gap:1.25rem;flex-wrap:wrap;}
+  .grid-2 > *{flex:1 1 320px;}
+  .card{background:var(--card);border-radius:10px;padding:1.1rem 1.3rem;}
+  .card-warn{background:var(--card-warn);border-radius:10px;padding:1.1rem 1.3rem;}
+  ul.bullets{margin:0;padding-left:1.2rem;}
+  ul.bullets li{margin-bottom:0.6rem;line-height:1.45;}
+  ul.bullets:last-child li:last-child{margin-bottom:0;}
+
+  /* ---------- icon circle ---------- */
+  .icon-circle{
+    width:48px;height:48px;border-radius:50%;
+    background:var(--primary);
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
+  }
+  .icon-circle svg{width:24px;height:24px;}
+  .icon-circle.alt{background:var(--secondary);}
+
+  /* ---------- objectives / help rows ---------- */
+  .row{display:flex;gap:1rem;align-items:flex-start;margin-bottom:1.4rem;}
+  .row h3{font-size:1.05rem;margin-bottom:0.25rem;}
+  .row p{margin:0;color:var(--muted);font-size:0.95rem;line-height:1.5;}
+
+  /* ---------- title screen ---------- */
+  .hero{
+    background:linear-gradient(135deg,var(--primary) 0%, var(--primary-dark) 100%);
+    color:var(--white);
+    margin:-2rem -1.75rem -1.5rem;
+    padding:3rem 2.25rem 3.5rem;
+    min-height:calc(100vh - 70px);
+    position:relative;
+    overflow:hidden;
+  }
+  .hero::before{
+    content:"";position:absolute;top:-90px;right:-60px;width:280px;height:280px;
+    border-radius:50%;background:rgba(0,168,150,0.35);
+  }
+  .hero::after{
+    content:"";position:absolute;bottom:-70px;left:-70px;width:200px;height:200px;
+    border-radius:50%;background:rgba(2,195,154,0.25);
+  }
+  .hero .inner{position:relative;z-index:1;max-width:640px;}
+  .hero .badge-circle{
+    width:64px;height:64px;border-radius:50%;background:var(--white);
+    display:flex;align-items:center;justify-content:center;margin-bottom:1.4rem;
+  }
+  .hero .badge-circle svg{width:30px;height:30px;}
+  .hero .eyebrow{letter-spacing:2px;font-size:0.78rem;font-weight:bold;color:#BFEEE7;margin-bottom:0.6rem;text-transform:uppercase;}
+  .hero h1{font-size:2.4rem;line-height:1.15;margin-bottom:1rem;}
+  .hero .sub{color:#DFF5F1;font-size:1rem;line-height:1.55;margin-bottom:2rem;max-width:520px;}
+  .hero .start-row{display:flex;align-items:center;gap:1.2rem;flex-wrap:wrap;}
+  .btn-start{
+    background:var(--white);color:var(--primary);border:none;border-radius:8px;
+    padding:0.8rem 1.4rem;font-weight:bold;font-size:0.95rem;
+  }
+  .hero .meta{color:#BFEEE7;font-size:0.85rem;font-style:italic;}
+
+  /* ---------- roadmap ---------- */
+  .roadmap{display:flex;flex-wrap:wrap;gap:0.4rem;align-items:flex-start;margin-bottom:1.4rem;}
+  .road-step{width:108px;text-align:center;font-size:0.78rem;}
+  .road-step .icon-circle{margin:0 auto 0.4rem;}
+  .road-step .lbl{font-weight:bold;font-size:0.8rem;margin-bottom:0.15rem;}
+  .road-step .time{color:var(--muted);font-style:italic;font-size:0.72rem;}
+  .road-arrow{align-self:center;color:var(--dash);font-size:1.1rem;margin-top:14px;}
+
+  /* ---------- placeholder block ---------- */
+  .placeholder{
+    border:2px dashed var(--dash);
+    border-radius:10px;
+    background:var(--card);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;padding:1.5rem;gap:0.5rem;
+  }
+  .placeholder svg{width:42px;height:42px;color:var(--dash);}
+  .placeholder .ph-label{font-weight:bold;color:var(--muted);font-size:0.95rem;}
+  .placeholder .ph-sub{color:var(--muted);font-style:italic;font-size:0.82rem;max-width:520px;}
+
+  /* ---------- SMART cards ---------- */
+  .smart-wrap{display:flex;gap:0.7rem;flex-wrap:wrap;}
+  .smart-card{
+    flex:1;min-width:140px;border-radius:10px;padding:1.1rem 0.8rem;color:var(--white);text-align:center;
+  }
+  .smart-card .letter{font-family:Cambria,Georgia,serif;font-size:2.4rem;font-weight:bold;margin-bottom:0.3rem;}
+  .smart-card .word{font-weight:bold;margin-bottom:0.5rem;font-size:0.95rem;}
+  .smart-card p{font-size:0.78rem;line-height:1.4;margin:0;color:#F0FAF8;}
+
+  /* ---------- quiz ---------- */
+  .quiz-question{background:var(--card);border-radius:10px;padding:1rem 1.2rem;margin-bottom:1.2rem;font-size:1rem;}
+  .quiz-question em{color:var(--ink);}
+  .options{display:flex;flex-direction:column;gap:0.6rem;margin-bottom:1rem;}
+  .option{
+    display:flex;align-items:center;gap:0.7rem;border:1px solid var(--dash);border-radius:8px;
+    padding:0.6rem 0.9rem;cursor:pointer;background:var(--white);transition:.15s;
+  }
+  .option:hover{background:var(--card);}
+  .option input{accent-color:var(--primary);width:18px;height:18px;flex-shrink:0;}
+  .option.correct{background:#E7F7F2;border-color:var(--accent);}
+  .option.incorrect{background:var(--card-warn);border-color:#E08A8A;}
+  .btn-check{
+    background:var(--primary);color:var(--white);border:none;border-radius:8px;
+    padding:0.6rem 1.3rem;font-weight:bold;font-size:0.9rem;
+  }
+  .btn-check:disabled{background:var(--dash);}
+  .feedback{
+    margin-top:1rem;padding:0.8rem 1rem;border-radius:8px;font-size:0.92rem;font-style:italic;
+    display:none;
+  }
+  .feedback.show{display:block;}
+  .feedback.good{background:#E7F7F2;color:var(--primary-dark);}
+  .feedback.bad{background:var(--card-warn);color:#9A3B3B;}
+
+  /* ---------- prompt builder ---------- */
+  textarea#promptInput{
+    width:100%;min-height:90px;border:1px solid var(--dash);border-radius:8px;
+    padding:0.8rem;font-family:Calibri,Arial,sans-serif;font-size:0.95rem;color:var(--muted);
+    font-style:italic;resize:vertical;
+  }
+  .btn-generate{
+    background:var(--secondary);color:var(--white);border:none;border-radius:8px;
+    padding:0.6rem 1.3rem;font-weight:bold;font-size:0.9rem;margin:0.9rem 0;
+  }
+  .ai-output{display:none;}
+  .ai-output.show{display:block;}
+  .ai-output-box{
+    border-radius:10px;background:#E7F7F2;border:1px solid var(--accent);padding:1rem 1.2rem;
+    font-size:0.95rem;line-height:1.5;
+  }
+
+  /* ---------- workflow steps ---------- */
+  .workflow{display:flex;gap:0.6rem;flex-wrap:wrap;}
+  .wf-step{flex:1;min-width:140px;background:var(--card);border-radius:10px;padding:1rem 0.8rem;text-align:center;}
+  .wf-step .icon-circle{margin:0 auto 0.5rem;}
+  .wf-step .num{color:var(--secondary);font-family:Cambria,Georgia,serif;font-weight:bold;font-size:0.95rem;}
+  .wf-step .lbl{font-weight:bold;font-size:0.92rem;margin:0.2rem 0 0.4rem;}
+  .wf-step p{font-size:0.78rem;color:var(--muted);margin:0;line-height:1.35;}
+
+  /* ---------- matching ---------- */
+  .match-wrap{display:flex;flex-direction:column;gap:0.6rem;}
+  .match-row{display:flex;align-items:center;gap:0.6rem;}
+  .match-row > .match-pill{flex:1;}
+  .match-row > span{flex:0 0 auto;}
+  .match-pill{
+    border-radius:8px;padding:0.65rem 0.9rem;font-size:0.9rem;text-align:center;
+    border:1px solid var(--dash);cursor:pointer;user-select:none;transition:.15s;
+  }
+  .match-pill.left{background:var(--primary);color:var(--white);border:none;}
+  .match-pill.right{background:var(--card);}
+  .match-pill.selected{outline:3px solid var(--secondary);}
+  .match-pill.matched-correct{background:#E7F7F2;border-color:var(--accent);color:var(--ink);}
+  .match-pill.right.matched-correct{background:#E7F7F2;}
+  .match-pill.shake{animation:shake .3s;}
+  @keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-4px);}75%{transform:translateX(4px);}}
+  .match-status{text-align:center;color:var(--muted);font-style:italic;font-size:0.85rem;margin-top:0.6rem;}
+
+  /* ---------- table ---------- */
+  table.rubric{width:100%;border-collapse:collapse;font-size:0.88rem;}
+  table.rubric th{background:var(--primary);color:var(--white);text-align:left;padding:0.7rem 0.8rem;}
+  table.rubric td{padding:0.7rem 0.8rem;border-bottom:1px solid var(--track);vertical-align:top;}
+  table.rubric tr:last-child td{border-bottom:none;}
+
+  /* ---------- footer nav ---------- */
+  .navbar{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:0.9rem 1.5rem;border-top:1px solid var(--track);background:#FAFCFC;
+    position:sticky;bottom:0;
+  }
+  .nav-btn{
+    border:none;border-radius:8px;padding:0.6rem 1.2rem;font-weight:bold;font-size:0.9rem;
+    background:var(--primary);color:var(--white);
+  }
+  .nav-btn:disabled{background:#C7D6D5;color:#8AA0A0;cursor:not-allowed;}
+  .nav-btn.ghost{background:transparent;color:var(--primary);border:1px solid var(--primary);}
+  .nav-btn.ghost:disabled{border-color:#C7D6D5;color:#A9BBBB;}
+  .navbar .pos{color:var(--muted);font-size:0.82rem;}
+
+  /* ---------- checklist ---------- */
+  .checklist-item{
+    display:flex;align-items:flex-start;gap:0.7rem;padding:0.65rem 0;border-bottom:1px solid var(--track);cursor:pointer;
+  }
+  .checklist-item:last-child{border-bottom:none;}
+  .checklist-item input{width:19px;height:19px;margin-top:2px;accent-color:var(--primary);flex-shrink:0;}
+  .checklist-item span{font-size:0.95rem;line-height:1.4;}
+
+  /* ---------- rating widget ---------- */
+  .rating{display:flex;gap:0.5rem;margin:0.6rem 0 1.1rem;}
+  .rating button{
+    width:46px;height:46px;border-radius:50%;border:1px solid var(--dash);background:var(--white);
+    font-weight:bold;font-size:1rem;color:var(--muted);
+  }
+  .rating button.selected{background:var(--primary);color:var(--white);border-color:var(--primary);}
+  textarea#feedbackComments, textarea#ownGoalInput{
+    width:100%;min-height:90px;border:1px solid var(--dash);border-radius:8px;
+    padding:0.8rem;font-family:Calibri,Arial,sans-serif;font-size:0.95rem;color:var(--ink);resize:vertical;
+  }
+
+  a.linklike{color:var(--primary);font-weight:bold;text-decoration:none;}
+  a.linklike:hover{text-decoration:underline;}
+
+  /* ---------- dual-path widget ---------- */
+  .path-select{display:flex;gap:0.8rem;margin-bottom:1.2rem;flex-wrap:wrap;}
+  .path-card{
+    flex:1;min-width:220px;border:2px solid var(--track);border-radius:10px;
+    padding:1rem 1.1rem;cursor:pointer;background:var(--white);transition:.15s;
+  }
+  .path-card:hover{border-color:var(--secondary);background:var(--card);}
+  .path-card.active{border-color:var(--primary);background:var(--card);}
+  .path-card h3{font-size:1rem;color:var(--primary);margin-bottom:0.3rem;font-family:Calibri,"Segoe UI",Arial,sans-serif;}
+  .path-card p{font-size:0.85rem;color:var(--muted);margin:0;line-height:1.4;}
+  .path-panel{display:none;}
+  .path-panel.active{display:block;animation:fade .2s ease;}
+  .btn{border:none;border-radius:8px;padding:0.65rem 1.3rem;font-weight:bold;font-size:0.9rem;cursor:pointer;font-family:inherit;}
+  .btn-primary{background:var(--primary);color:var(--white);}
+  .btn-secondary{background:var(--secondary);color:var(--white);}
+  .btn-ghost{background:var(--white);color:var(--primary);border:1.5px solid var(--primary);}
+  .btn-row{display:flex;gap:0.7rem;margin-top:0.9rem;flex-wrap:wrap;}
+  .score-banner{margin-top:1rem;border-radius:8px;padding:0.8rem 1rem;font-weight:bold;font-size:0.95rem;}
+  .score-banner.strong{background:#E7F7F2;color:var(--primary-dark);}
+  .score-banner.weak{background:var(--card-warn);color:#9A3B3B;}
+  .checklist-result{margin-top:0.8rem;}
+  .check-item{display:flex;align-items:flex-start;gap:0.6rem;padding:0.6rem 0;border-bottom:1px solid var(--track);}
+  .check-item:last-child{border-bottom:none;}
+  .check-icon{width:22px;height:22px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:bold;color:var(--white);margin-top:1px;}
+  .check-icon.yes{background:var(--accent);}
+  .check-icon.no{background:#C0524F;}
+  .check-text strong{display:block;font-size:0.92rem;}
+  .check-text span{font-size:0.82rem;color:var(--muted);}
+  .example-box{margin-top:1rem;border-radius:8px;background:var(--card);padding:0.9rem 1.1rem;font-size:0.88rem;}
+  .example-box strong{color:var(--primary);}
+  .external-card{border:1px solid var(--track);border-radius:10px;padding:1.1rem;background:var(--card);margin-bottom:0.9rem;}
+  .external-buttons{display:flex;gap:0.7rem;margin-top:0.7rem;flex-wrap:wrap;}
+  .copy-row{display:flex;gap:0.6rem;align-items:flex-start;flex-wrap:wrap;}
+  .copy-row textarea{flex:1;min-width:220px;min-height:70px;border:1px solid var(--dash);border-radius:8px;padding:0.6rem;font-size:0.85rem;font-family:inherit;resize:vertical;}
+  .copy-confirm{font-size:0.82rem;color:var(--primary);font-weight:bold;display:none;margin-top:0.4rem;}
+  .copy-confirm.show{display:block;}
+
+  .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);}
+
+  /* SMART Infographic */
+:root{
+    --p1:#028090;
+    --p2:#00A896;
+    --p3:#02C39A;
+    --ink:#1E2B2B;
+    --muted:#5B6B6B;
+    --card:#F2F8F7;
+    --white:#FFFFFF;
+    --warn:#C0524F;
+  }
+.smart-infographic * {box-sizing:border-box;margin:0;padding:0;}
+.smart-infographic body {
+    background:var(--white);
+    font-family:'Calibri','Segoe UI',Arial,sans-serif;
+    color:var(--ink);
+    padding:0;
+  }
+.smart-infographic .infographic {
+    width:900px;
+    margin:0 auto;
+    background:var(--white);
+  }
+.smart-infographic /* ---- HEADER ---- */
+  .header {
+    background:linear-gradient(135deg, var(--p1) 0%, var(--p2) 100%);
+    padding:2rem 2.5rem 1.8rem;
+    position:relative;
+    overflow:hidden;
+  }
+.smart-infographic .header::before {
+    content:'';position:absolute;top:-60px;right:-40px;
+    width:240px;height:240px;border-radius:50%;
+    background:rgba(255,255,255,0.08);
+  }
+.smart-infographic .header::after {
+    content:'';position:absolute;bottom:-50px;left:60px;
+    width:160px;height:160px;border-radius:50%;
+    background:rgba(2,195,154,0.2);
+  }
+.smart-infographic .header-inner {position:relative;z-index:1;}
+.smart-infographic .header-eyebrow {
+    font-size:0.7rem;font-weight:700;letter-spacing:2.5px;
+    text-transform:uppercase;color:rgba(255,255,255,0.7);
+    margin-bottom:0.4rem;
+  }
+.smart-infographic .header h1 {
+    font-family:Cambria,Cambria,Georgia,serif;
+    font-size:2rem;color:var(--white);line-height:1.15;
+    margin-bottom:0.5rem;
+  }
+.smart-infographic .header-sub {
+    font-size:0.9rem;color:rgba(255,255,255,0.8);
+    max-width:520px;line-height:1.5;
+  }
+.smart-infographic /* ---- SMART CARDS ---- */
+  .cards-section {
+    padding:1.6rem 1.5rem 0.8rem;
+    background:var(--card);
+  }
+.smart-infographic .cards {
+    display:flex;gap:0.6rem;
+  }
+.smart-infographic .card {
+    flex:1;border-radius:10px;overflow:hidden;
+    box-shadow:0 2px 8px rgba(0,0,0,0.07);
+  }
+.smart-infographic .card-top {
+    padding:1.1rem 0.9rem 0.8rem;
+    display:flex;flex-direction:column;align-items:center;text-align:center;
+  }
+.smart-infographic .card:nth-child(odd) .card-top { background:var(--p1); }
+.smart-infographic .card:nth-child(even) .card-top { background:var(--p2); }
+.smart-infographic .card-letter {
+    font-family:Cambria,Cambria,Georgia,serif;
+    font-size:3rem;font-weight:700;color:var(--white);
+    line-height:1;margin-bottom:0.3rem;
+  }
+.smart-infographic .card-word {
+    font-size:0.78rem;font-weight:700;color:rgba(255,255,255,0.9);
+    text-transform:uppercase;letter-spacing:1px;
+  }
+.smart-infographic .card-bottom {
+    background:var(--white);padding:0.85rem 0.9rem;
+  }
+.smart-infographic .card-def {
+    font-size:0.8rem;color:var(--ink);line-height:1.45;
+    margin-bottom:0.55rem;
+  }
+.smart-infographic .card-question {
+    font-size:0.72rem;font-weight:700;
+    padding:0.35rem 0.5rem;border-radius:5px;
+    background:var(--card);color:var(--muted);
+    line-height:1.35;border-left:3px solid;
+  }
+.smart-infographic .card:nth-child(odd) .card-question { border-color:var(--p1); }
+.smart-infographic .card:nth-child(even) .card-question { border-color:var(--p2); }
+.smart-infographic /* ---- EXAMPLE SECTION ---- */
+  .example-section {
+    padding:1.4rem 1.5rem 1.6rem;
+    background:var(--card);
+    border-top:1px solid rgba(2,128,144,0.12);
+  }
+.smart-infographic .example-label {
+    font-size:0.68rem;font-weight:700;letter-spacing:2px;
+    text-transform:uppercase;color:var(--p2);margin-bottom:0.7rem;
+  }
+.smart-infographic .example-goal {
+    background:var(--white);border-radius:10px;
+    border:1.5px solid rgba(2,128,144,0.2);
+    padding:1.1rem 1.2rem 0.8rem;
+    margin-bottom:1rem;
+    font-size:0.88rem;line-height:1.6;color:var(--ink);
+  }
+.smart-infographic .example-goal p {margin-bottom:0.6rem;}
+.smart-infographic .tag {
+    display:inline-block;border-radius:4px;padding:0.1rem 0.4rem;
+    font-size:0.7rem;font-weight:700;text-transform:uppercase;
+    letter-spacing:0.5px;color:var(--white);margin:0 1px;
+    vertical-align:middle;
+  }
+.smart-infographic .tag-s {background:var(--p1);}
+.smart-infographic .tag-m {background:var(--p2);}
+.smart-infographic .tag-a {background:var(--p1);}
+.smart-infographic .tag-r {background:var(--p2);}
+.smart-infographic .tag-t {background:var(--p3);color:var(--ink);}
+.smart-infographic .annotations {
+    display:flex;gap:0.5rem;flex-wrap:wrap;
+  }
+.smart-infographic .ann {
+    flex:1;min-width:140px;background:var(--white);border-radius:7px;
+    padding:0.5rem 0.6rem;border-top:3px solid;
+  }
+.smart-infographic .ann-s {border-color:var(--p1);}
+.smart-infographic .ann-m {border-color:var(--p2);}
+.smart-infographic .ann-a {border-color:var(--p1);}
+.smart-infographic .ann-r {border-color:var(--p2);}
+.smart-infographic .ann-t {border-color:var(--p3);}
+.smart-infographic .ann-letter {
+    font-family:Cambria,Cambria,Georgia,serif;
+    font-size:1rem;font-weight:700;margin-bottom:0.1rem;
+  }
+.smart-infographic .ann-s .ann-letter {color:var(--p1);}
+.smart-infographic .ann-m .ann-letter {color:var(--p2);}
+.smart-infographic .ann-a .ann-letter {color:var(--p1);}
+.smart-infographic .ann-r .ann-letter {color:var(--p2);}
+.smart-infographic .ann-t .ann-letter {color:var(--p3);}
+.smart-infographic .ann-text {font-size:0.7rem;color:var(--muted);line-height:1.35;}
+.smart-infographic /* ---- LEGAL NOTE ---- */
+  .legal-note {
+    background:linear-gradient(135deg,var(--p1) 0%,var(--p2) 100%);
+    padding:1rem 1.5rem;
+    display:flex;align-items:flex-start;gap:0.8rem;
+  }
+.smart-infographic .legal-icon {
+    width:32px;height:32px;border-radius:50%;
+    background:rgba(255,255,255,0.2);
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;font-size:1rem;
+  }
+.smart-infographic .legal-text {font-size:0.78rem;color:rgba(255,255,255,0.95);line-height:1.5;}
+.smart-infographic .legal-text strong {color:var(--white);font-weight:700;}
+.smart-infographic /* ---- FOOTER ---- */
+  .footer {
+    background:var(--ink);
+    padding:0.6rem 1.5rem;
+    display:flex;align-items:center;justify-content:space-between;
+  }
+.smart-infographic .footer-title {
+    font-size:0.72rem;color:rgba(255,255,255,0.6);
+  }
+.smart-infographic .footer-title strong {color:rgba(255,255,255,0.9);}
+.smart-infographic .footer-badge {
+    font-size:0.65rem;font-weight:700;letter-spacing:1px;
+    text-transform:uppercase;color:var(--p3);
+  }
+  /* IEP Tools Graphic */
+:root{
+    --p1:#028090; --p2:#00A896; --p3:#02C39A;
+    --ink:#1E2B2B; --muted:#5B6B6B; --card:#F2F8F7;
+    --white:#FFFFFF; --warn:#C0524F; --warn-bg:#FCEFEF;
+    --track:#E2E8E8;
+  }
+.tools-infographic * {box-sizing:border-box;margin:0;padding:0;}
+.tools-infographic body {
+    background:var(--white);
+    font-family:'Calibri','Segoe UI',Arial,sans-serif;
+    color:var(--ink);
+  }
+.tools-infographic .infographic {width:900px;margin:0 auto;background:var(--white);}
+.tools-infographic /* ---- HEADER ---- */
+  .header {
+    background:linear-gradient(135deg,var(--ink) 0%,#2E4A4A 100%);
+    padding:1.8rem 2rem 1.5rem;position:relative;overflow:hidden;
+  }
+.tools-infographic .header::before {
+    content:'';position:absolute;top:-50px;right:-30px;
+    width:200px;height:200px;border-radius:50%;
+    background:rgba(2,128,144,0.2);
+  }
+.tools-infographic .header::after {
+    content:'';position:absolute;bottom:-40px;left:40px;
+    width:130px;height:130px;border-radius:50%;
+    background:rgba(2,195,154,0.15);
+  }
+.tools-infographic .header-inner {position:relative;z-index:1;}
+.tools-infographic .header-eyebrow {
+    font-size:0.68rem;font-weight:700;letter-spacing:2.5px;
+    text-transform:uppercase;color:var(--p3);margin-bottom:0.4rem;
+  }
+.tools-infographic .header h1 {
+    font-family:Cambria,Cambria,Georgia,serif;
+    font-size:1.75rem;color:var(--white);line-height:1.2;margin-bottom:0.45rem;
+  }
+.tools-infographic .header-sub {font-size:0.85rem;color:rgba(255,255,255,0.72);max-width:600px;line-height:1.5;}
+.tools-infographic /* ---- DIVIDER ---- */
+  .divider {
+    background:var(--p3);height:4px;
+    display:flex;align-items:center;justify-content:center;
+    position:relative;
+  }
+.tools-infographic .divider-label {
+    background:var(--p3);color:var(--ink);
+    font-size:0.65rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+    padding:0.2rem 0.8rem;border-radius:20px;position:absolute;
+  }
+.tools-infographic /* ---- TOOL GRID SECTION ---- */
+  .tools-section {
+    padding:1.4rem 1.5rem 1.2rem;
+    background:var(--card);
+  }
+.tools-infographic .tools-label {
+    font-size:0.68rem;font-weight:700;letter-spacing:2px;
+    text-transform:uppercase;color:var(--muted);margin-bottom:0.9rem;
+  }
+.tools-infographic .tools-grid {
+    display:grid;grid-template-columns:repeat(5,1fr);gap:0.55rem;
+    margin-bottom:1rem;
+  }
+.tools-infographic .tool-card {
+    background:var(--white);border-radius:8px;
+    border:1.5px solid var(--track);
+    padding:0.75rem 0.6rem 0.65rem;text-align:center;
+    position:relative;
+  }
+.tools-infographic .tool-card.focus {border-color:var(--p2);background:#F0FAFA;}
+.tools-infographic .tool-name {
+    font-size:0.8rem;font-weight:700;color:var(--ink);
+    margin-bottom:0.25rem;line-height:1.2;
+  }
+.tools-infographic .tool-type {
+    font-size:0.65rem;color:var(--muted);
+    line-height:1.3;
+  }
+.tools-infographic .risk-dot {
+    display:inline-block;width:7px;height:7px;border-radius:50%;
+    background:var(--warn);margin-top:0.4rem;
+    box-shadow:0 0 0 2px rgba(192,82,79,0.2);
+  }
+.tools-infographic /* ---- RISK CALLOUT ---- */
+  .risk-section {
+    padding:1.1rem 1.5rem 1.3rem;
+    background:var(--white);
+    border-top:1px solid var(--track);
+  }
+.tools-infographic .risk-header {
+    display:flex;align-items:center;gap:0.6rem;margin-bottom:0.9rem;
+  }
+.tools-infographic .risk-icon-circle {
+    width:32px;height:32px;border-radius:50%;
+    background:var(--warn);display:flex;align-items:center;
+    justify-content:center;color:var(--white);font-size:0.9rem;
+    font-weight:700;flex-shrink:0;
+  }
+.tools-infographic .risk-title {
+    font-family:Cambria,Cambria,Georgia,serif;
+    font-size:1rem;color:var(--ink);
+  }
+.tools-infographic .risks-grid {
+    display:grid;grid-template-columns:repeat(2,1fr);gap:0.7rem;
+  }
+.tools-infographic .risk-item {
+    background:var(--warn-bg);border-radius:8px;
+    border-left:4px solid var(--warn);
+    padding:0.7rem 0.8rem;
+  }
+.tools-infographic .risk-item-title {
+    font-size:0.8rem;font-weight:700;color:var(--warn);
+    margin-bottom:0.3rem;
+  }
+.tools-infographic .risk-item-body {font-size:0.76rem;color:var(--ink);line-height:1.45;}
+.tools-infographic /* ---- THE CATCH-22 BANNER ---- */
+  .catchall {
+    margin:0 1.5rem 1.2rem;
+    background:var(--card);border-radius:8px;
+    border:1.5px dashed var(--p2);
+    padding:0.8rem 1rem;
+    display:flex;gap:0.7rem;align-items:flex-start;
+  }
+.tools-infographic .catch-icon {
+    font-size:1.2rem;flex-shrink:0;margin-top:1px;
+  }
+.tools-infographic .catch-body {font-size:0.78rem;color:var(--ink);line-height:1.5;}
+.tools-infographic .catch-body strong {color:var(--p1);}
+.tools-infographic /* ---- LEGAL FOOTER ---- */
+  .legal {
+    background:linear-gradient(135deg,var(--p1) 0%,var(--p2) 100%);
+    padding:0.9rem 1.5rem;
+    display:flex;align-items:flex-start;gap:0.7rem;
+  }
+.tools-infographic .legal-icon {
+    width:28px;height:28px;border-radius:50%;
+    background:rgba(255,255,255,0.2);
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;font-size:0.9rem;
+  }
+.tools-infographic .legal-text {font-size:0.76rem;color:rgba(255,255,255,0.95);line-height:1.5;}
+.tools-infographic .legal-text strong {color:var(--white);}
+.tools-infographic /* ---- BASE FOOTER ---- */
+  .footer {
+    background:var(--ink);padding:0.55rem 1.5rem;
+    display:flex;align-items:center;justify-content:space-between;
+  }
+.tools-infographic .footer-title {font-size:0.7rem;color:rgba(255,255,255,0.6);}
+.tools-infographic .footer-title strong {color:rgba(255,255,255,0.9);}
+.tools-infographic .footer-badge {font-size:0.62rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--p3);}
+</style>
+</head>
+<body>
+
+<a href="#main" class="sr-only">Skip to module content</a>
+
+<div class="app">
+  <header class="topbar">
+    <div class="title">AI-Assisted IEP Goal Writing</div>
+    <div class="right">
+      <label class="sr-only" for="jumpNav">Jump to screen</label>
+      <select id="jumpNav" aria-label="Jump to screen"></select>
+      <span id="screenLabel">Welcome &bull; Screen 1 of 16</span>
+    </div>
+  </header>
+  <div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="16" aria-valuenow="1" id="progressBar">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <main id="main">
+
+    <!-- SCREEN 1 — Title / Welcome -->
+    <section class="screen active" data-title="1. Welcome" data-section="Welcome">
+      <div class="hero">
+        <div class="inner">
+          <div class="badge-circle">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#028090" stroke-width="2"><path d="M16 11c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3zM8 11c1.66 0 3-1.34 3-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.67 0-8 1.34-8 4v2h10v-2c0-1.13.47-2.13 1.24-2.94C9.99 13.4 8.95 13 8 13zm8 0c-.29 0-.62.02-.97.05A4.97 4.97 0 0 1 17 17v2h7v-2c0-2.66-5.33-4-9-4z"/></svg>
+          </div>
+          <div class="eyebrow">Co-Teaching Team Workshop</div>
+          <h1>AI-Assisted IEP Goal Writing for Co-Teaching Teams</h1>
+          <p class="sub">A practical, screen-by-screen workshop for general education and special education co-teaching partners who draft IEP goals together.</p>
+          <div class="start-row">
+            <button class="btn-start" onclick="goTo(1)">Begin the Module &rarr;</button>
+            <span class="meta">Estimated time: 60&ndash;70 minutes &nbsp;|&nbsp; No login required</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCREEN 2 — Learning Objectives -->
+    <section class="screen" data-title="2. Learning Objectives" data-section="Welcome">
+      <div class="kicker">Before You Start</div>
+      <h2>What You'll Be Able to Do</h2>
+
+      <div class="row">
+        <div class="icon-circle">${ICON_TARGET}</div>
+        <div>
+          <h3>1. Draft a Compliant Goal</h3>
+          <p>Use an AI tool to draft an IEP goal statement that meets all five SMART criteria.</p>
+        </div>
+      </div>
+      <div class="row">
+        <div class="icon-circle">${ICON_TARGET}</div>
+        <div>
+          <h3>2. Spot the Risks</h3>
+          <p>Identify at least three risks of using AI-generated goal language without review &mdash; generic phrasing, inaccurate baseline data, and compliance gaps.</p>
+        </div>
+      </div>
+      <div class="row">
+        <div class="icon-circle">${ICON_TARGET}</div>
+        <div>
+          <h3>3. Apply the Team Workflow</h3>
+          <p>Apply a structured co-teaching workflow to verify, revise, and finalize an AI-drafted goal before it goes into a student's IEP.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCREEN 3 — Pretest -->
+    <section class="screen" data-title="3. Quick Check: What Do You Already Know?" data-section="Welcome">
+      <div class="kicker">Before You Begin</div>
+      <h2>What Do You Already Know?</h2>
+      <p class="lede">Four quick questions. If you're already solid on this material, you'll get the option to skip ahead to the legal guidelines and the review workflow.</p>
+
+      <p style="font-weight:bold;margin-bottom:0.4rem;">1. Which part of a SMART goal does "8 of 10 trials" represent?</p>
+      <div class="options" style="margin-bottom:1.2rem;">
+        <label class="option"><input type="radio" name="pre1" value="A"> Specific</label>
+        <label class="option"><input type="radio" name="pre1" value="B"> Measurable</label>
+        <label class="option"><input type="radio" name="pre1" value="C"> Achievable</label>
+        <label class="option"><input type="radio" name="pre1" value="D"> Time-bound</label>
+      </div>
+
+      <p style="font-weight:bold;margin-bottom:0.4rem;">2. An AI tool suggests a 95% accuracy benchmark for a student's goal. What should you do first?</p>
+      <div class="options" style="margin-bottom:1.2rem;">
+        <label class="option"><input type="radio" name="pre2" value="A"> Use it as written since the AI calculated it</label>
+        <label class="option"><input type="radio" name="pre2" value="B"> Compare it to the student's actual baseline data</label>
+        <label class="option"><input type="radio" name="pre2" value="C"> Ask the AI to explain its reasoning</label>
+        <label class="option"><input type="radio" name="pre2" value="D"> Remove the benchmark entirely</label>
+      </div>
+
+      <p style="font-weight:bold;margin-bottom:0.4rem;">3. True or False: An IEP goal generated by AI and adopted without team review and individualization satisfies IDEA's requirements.</p>
+      <div class="options" style="margin-bottom:1.2rem;">
+        <label class="option"><input type="radio" name="pre3" value="A"> True</label>
+        <label class="option"><input type="radio" name="pre3" value="B"> False</label>
+      </div>
+
+      <p style="font-weight:bold;margin-bottom:0.4rem;">4. In a compliant co-teaching workflow, who should sign off before a goal is finalized?</p>
+      <div class="options" style="margin-bottom:1.2rem;">
+        <label class="option"><input type="radio" name="pre4" value="A"> Just the special education teacher</label>
+        <label class="option"><input type="radio" name="pre4" value="B"> Just the AI tool</label>
+        <label class="option"><input type="radio" name="pre4" value="C"> Both co-teaching partners</label>
+        <label class="option"><input type="radio" name="pre4" value="D"> The student</label>
+      </div>
+
+      <button class="btn-check" onclick="scorePretest()">See My Results</button>
+
+      <div class="card" id="pretestResult" style="display:none;margin-top:1.1rem;">
+        <strong id="pretestScoreText"></strong>
+        <p id="pretestMsg" style="margin:0.5rem 0 0.9rem;color:var(--muted);"></p>
+        <div style="display:flex;gap:0.8rem;flex-wrap:wrap;">
+          <button class="nav-btn" type="button" onclick="goTo(PRETEST_SKIP_TARGET)">Skip to Legal Guidelines &amp; Workflow &rarr;</button>
+          <button class="nav-btn ghost" type="button" onclick="goTo(currentScreen+1)">Go Through the Full Module &rarr;</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCREEN 4 — Module Roadmap -->
+    <section class="screen" data-title="4. Module Roadmap" data-section="Welcome">
+      <div class="kicker">Module Map</div>
+      <h2>How This Module Works</h2>
+
+      <div class="roadmap">
+        <div class="road-step"><div class="icon-circle">${ICON_ROBOT}</div><div class="lbl">Why AI, Why Now</div><div class="time">10 min</div></div>
+        <div class="road-arrow">&rarr;</div>
+        <div class="road-step"><div class="icon-circle alt">${ICON_CHECK}</div><div class="lbl">Check 1</div><div class="time">2 min</div></div>
+        <div class="road-arrow">&rarr;</div>
+        <div class="road-step"><div class="icon-circle">${ICON_LIST}</div><div class="lbl">Anatomy of a SMART Goal</div><div class="time">22 min</div></div>
+        <div class="road-arrow">&rarr;</div>
+        <div class="road-step"><div class="icon-circle alt">${ICON_CHECK}</div><div class="lbl">Check 2</div><div class="time">2 min</div></div>
+        <div class="road-arrow">&rarr;</div>
+        <div class="road-step"><div class="icon-circle">${ICON_LOCK}</div><div class="lbl">Legal Guidelines</div><div class="time">8 min</div></div>
+        <div class="road-arrow">&rarr;</div>
+        <div class="road-step"><div class="icon-circle">${ICON_SYNC}</div><div class="lbl">Co-Teaching Review Workflow</div><div class="time">15 min</div></div>
+        <div class="road-arrow">&rarr;</div>
+        <div class="road-step"><div class="icon-circle alt">${ICON_CHECK}</div><div class="lbl">Check 3</div><div class="time">2 min</div></div>
+        <div class="road-arrow">&rarr;</div>
+        <div class="road-step"><div class="icon-circle alt">${ICON_CLIPBOARD}</div><div class="lbl">Final Task</div><div class="time">10 min</div></div>
+      </div>
+
+      <div class="card" style="margin-top:1.2rem;">
+        <strong>Work through the sections in order.</strong> Each section ends with a short formative check &mdash; these don't affect your grade, they just confirm you're ready to move on. The pretest you just took offers a shortcut straight to Legal Guidelines and the review workflow if you scored well. Your progress saves automatically, so you can pause and pick up where you left off.
+      </div>
+    </section>
+
+    <!-- SCREEN 4 — 1.1 The Problem -->
+    <section class="screen" data-title="5. Why IEP Goal Writing Needs Support" data-section="Section 1">
+      <div class="kicker">Section 1 &middot; Why AI, Why Now</div>
+      <h2>Why IEP Goal Writing Needs Support</h2>
+      <div class="grid-2">
+        <ul class="bullets">
+          <li>Co-teaching teams often have 15 minutes or less of shared planning time to draft a goal.</li>
+          <li>Goals written under time pressure tend toward vague language &mdash; "will improve reading skills" &mdash; that's hard to measure and hard to defend at a review meeting.</li>
+          <li>AI drafting tools can speed up the first draft, but only if the team knows how to prompt them well and how to check what comes back.</li>
+        </ul>
+        <div class="placeholder" style="min-height:220px;">
+          ${ICON_IMAGE}
+          <div class="ph-label">IMAGE PLACEHOLDER</div>
+          <div class="ph-sub">Photo: two co-teachers reviewing a laptop screen during a shared planning period</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCREEN 5 — 1.2 Can/Can't -->
+    <section class="screen" data-title="6. What AI Can and Can't Do" data-section="Section 1">
+      <div class="kicker">Section 1 &middot; Why AI, Why Now</div>
+      <h2>What AI Can (and Can't) Do</h2>
+      <div class="grid-2" style="margin-bottom:1.1rem;">
+        <div class="card">
+          <div class="row" style="margin-bottom:0.6rem;">
+            <div class="icon-circle" style="width:34px;height:34px;">${ICON_CHECK}</div>
+            <h3 style="margin-top:0.3rem;">AI Can</h3>
+          </div>
+          <ul class="bullets">
+            <li>Turn rough notes into a structured goal draft in seconds</li>
+            <li>Suggest measurable language and benchmark formats</li>
+            <li>Generate a few variations so the team can compare options</li>
+          </ul>
+        </div>
+        <div class="card-warn">
+          <div class="row" style="margin-bottom:0.6rem;">
+            <div class="icon-circle" style="width:34px;height:34px;background:#C0524F;">${ICON_X}</div>
+            <h3 style="margin-top:0.3rem;">AI Can't</h3>
+          </div>
+          <ul class="bullets">
+            <li>Know your student's actual present levels of performance</li>
+            <li>Guarantee legal compliance with IDEA or your state's code</li>
+            <li>Replace the co-teaching team's professional judgment</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:0.8rem;border-left:4px solid var(--secondary);">
+        <p style="margin:0;font-size:0.92rem;line-height:1.55;">Co-teaching teams who use AI tools without a clear process tend to make the same mistake: they treat the first draft as the final product. Watch a school-based SLP demonstrate how to prompt an AI tool using a student's present level of performance — and how to push back on the output when it doesn't get it right.</p>
+        <p style="margin:0.6rem 0 0;font-size:0.88rem;color:var(--muted);font-style:italic;">As you watch, pay attention to two things: what he includes in the prompt that makes the output more useful, and what step is still missing before any of these drafts could go into a legally compliant IEP.</p>
+      </div>
+      <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:10px;margin-bottom:0.8rem;">
+        <iframe src="https://www.youtube.com/embed/LvBfxxbDdW4" title="AI for IEP Goals — Kevin Cunningham" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;border-radius:10px;"></iframe>
+      </div>
+      <div class="card" style="border-left:4px solid var(--primary);">
+        <p style="margin:0;font-size:0.92rem;line-height:1.55;">Kevin Cunningham shows you how to get better output from an AI tool — and that skill matters. But notice what the workflow in his video stops short of: there is no check against the student's actual data, no IDEA compliance review, and no co-teaching partner involved in the decision. The draft goes straight from AI to "these goals look pretty good."</p>
+        <p style="margin:0.6rem 0 0;font-size:0.88rem;color:var(--muted);">That gap is exactly what this module addresses next. A strong prompt gets you a better starting point. What turns that starting point into a legally defensible goal is the team's review process — which is what Section 3 is built around.</p>
+      </div>
+    </section>
+
+    <!-- SCREEN 6 — Formative Check 1 -->
+    <section class="screen" data-title="7. Quick Check: Can / Can't" data-section="Section 1 Check">
+      <div class="kicker">Formative Check 1 of 3</div>
+      <h2>Quick Check: Can / Can't</h2>
+      <div class="quiz-question">A co-teacher pastes a student's present-level data into an AI tool and asks it to write a reading goal. The AI returns a goal with a 90% accuracy benchmark. What should the team do before using this goal?</div>
+      <div class="options" id="quiz1" role="radiogroup" aria-label="Quiz question 1">
+        <label class="option"><input type="radio" name="q1" value="A"> Add it to the IEP as written &mdash; the AI already calculated the benchmark.</label>
+        <label class="option"><input type="radio" name="q1" value="B"> Check the benchmark against the student's actual baseline data and adjust it if it isn't realistic.</label>
+        <label class="option"><input type="radio" name="q1" value="C"> Ask the AI to lower the benchmark to 70% so it's easier for the student to meet.</label>
+        <label class="option"><input type="radio" name="q1" value="D"> Remove the benchmark entirely since AI tools can't be trusted with numbers.</label>
+      </div>
+      <button class="btn-check" onclick="checkQuiz('quiz1','B','fb1')">Check Answer</button>
+      <div class="feedback" id="fb1" aria-live="polite"></div>
+    </section>
+
+    <!-- SCREEN 7 — SMART anatomy -->
+    <section class="screen" data-title="8. Anatomy of a SMART Goal" data-section="Section 2">
+      <div class="kicker">Section 2 &middot; Anatomy of a SMART Goal</div>
+      <h2>The Five Parts of a SMART IEP Goal</h2>
+      <div class="smart-wrap">
+        <div class="smart-card" style="background:#028090;"><div class="letter">S</div><div class="word">Specific</div><p>Names the skill and the condition &mdash; e.g., "during a 3-paragraph cold read"</p></div>
+        <div class="smart-card" style="background:#00A896;"><div class="letter">M</div><div class="word">Measurable</div><p>Includes a number and a way to track it &mdash; e.g., "8 of 10 trials"</p></div>
+        <div class="smart-card" style="background:#028090;"><div class="letter">A</div><div class="word">Achievable</div><p>Realistic given the student's current baseline, not an aspirational guess</p></div>
+        <div class="smart-card" style="background:#00A896;"><div class="letter">R</div><div class="word">Relevant</div><p>Tied to the student's actual, documented area of need</p></div>
+        <div class="smart-card" style="background:#028090;"><div class="letter">T</div><div class="word">Time-bound</div><p>States when progress will be checked &mdash; e.g., "by the next annual review"</p></div>
+      </div>
+<div class="smart-infographic" style="margin-top:1.2rem;border-radius:10px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.1);">
+<div class="infographic">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-inner">
+      <div class="header-eyebrow">AI-Assisted IEP Goal Writing &nbsp;·&nbsp; Reference Guide</div>
+      <h1>What Makes an IEP Goal SMART?</h1>
+      <p class="header-sub">Every AI-generated goal must be checked against all five criteria before it can be considered compliant under IDEA. Use this checklist with your co-teaching partner.</p>
+    </div>
+  </div>
+
+  <!-- SMART CARDS -->
+  <div class="cards-section">
+    <div class="cards">
+
+      <div class="card">
+        <div class="card-top">
+          <div class="card-letter">S</div>
+          <div class="card-word">Specific</div>
+        </div>
+        <div class="card-bottom">
+          <p class="card-def">Names the exact skill and the condition under which the student performs it — not a broad area like "reading," but a defined, observable behavior.</p>
+          <div class="card-question">Ask: Could two people independently observe this behavior and agree on what they're measuring?</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-top">
+          <div class="card-letter">M</div>
+          <div class="card-word">Measurable</div>
+        </div>
+        <div class="card-bottom">
+          <p class="card-def">Includes a number, a percentage, or a trial count — and a named method for tracking it. Subjective terms like "improve" or "feel more confident" are not measurable.</p>
+          <div class="card-question">Ask: Is there a specific number and a tracking method that make progress objective?</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-top">
+          <div class="card-letter">A</div>
+          <div class="card-word">Achievable</div>
+        </div>
+        <div class="card-bottom">
+          <p class="card-def">The target is calibrated to the student's actual baseline — not an aspirational guess. AI cannot set an achievable target without real present-level data.</p>
+          <div class="card-question">Ask: Does this target reflect what we know about where this student actually is right now?</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-top">
+          <div class="card-letter">R</div>
+          <div class="card-word">Relevant</div>
+        </div>
+        <div class="card-bottom">
+          <p class="card-def">Tied directly to a documented, actual area of need — not a generic skill that sounds appropriate for most students with this diagnosis.</p>
+          <div class="card-question">Ask: Does this goal address something identified in this student's present levels of performance?</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-top">
+          <div class="card-letter">T</div>
+          <div class="card-word">Time-bound</div>
+        </div>
+        <div class="card-bottom">
+          <p class="card-def">States a specific checkpoint — typically the next annual review date — so progress has a defined evaluation moment tied to the IEP timeline.</p>
+          <div class="card-question">Ask: Is there a specific date or IEP milestone that tells us when to measure progress?</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ANNOTATED EXAMPLE -->
+  <div class="example-section">
+    <div class="example-label">A SMART Goal in Action</div>
+    <div class="example-goal">
+      <p>
+        <span class="tag tag-t">T</span> By the next annual review,
+        <span class="tag tag-s">S</span> when given a grade-level reading passage during a 20-minute independent reading period,
+        <span class="tag tag-r">R</span> the student will identify the main idea and two supporting details
+        <span class="tag tag-m">M</span> with 80% accuracy across 4 of 5 consecutive trials, as measured by a curriculum-based reading probe.
+      </p>
+      <p style="font-size:0.8rem;color:var(--muted);font-style:italic;margin-bottom:0;">
+        <span class="tag tag-a" style="font-style:normal;">A</span>&nbsp; Baseline: currently identifies main idea with 40% accuracy (2 of 5 trials). Target is calibrated to a realistic growth trajectory for this student.
+      </p>
+    </div>
+    <div class="annotations">
+      <div class="ann ann-s">
+        <div class="ann-letter">S</div>
+        <div class="ann-text">"during a 20-minute independent reading period" — names the exact condition</div>
+      </div>
+      <div class="ann ann-m">
+        <div class="ann-letter">M</div>
+        <div class="ann-text">"80% across 4 of 5 trials, curriculum-based probe" — number + tracking method</div>
+      </div>
+      <div class="ann ann-a">
+        <div class="ann-letter">A</div>
+        <div class="ann-text">Baseline confirmed at 40% — target reflects realistic growth, not a guess</div>
+      </div>
+      <div class="ann ann-r">
+        <div class="ann-letter">R</div>
+        <div class="ann-text">"main idea and two supporting details" — matches documented area of need</div>
+      </div>
+      <div class="ann ann-t">
+        <div class="ann-letter">T</div>
+        <div class="ann-text">"by the next annual review" — tied to the IEP timeline</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LEGAL NOTE -->
+  <div class="legal-note">
+    <div class="legal-icon">⚖</div>
+    <div class="legal-text">
+      <strong>IDEA Reminder:</strong> Every IEP goal must be individualized to one specific student. An AI tool can generate a SMART-looking draft, but only the co-teaching team can verify that all five criteria reflect this student's actual data — not a template. AI assists. The team decides.
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <div class="footer-title"><strong>AI-Assisted IEP Goal Writing for Co-Teaching Teams</strong> &nbsp;·&nbsp; Professional Development Module</div>
+    <div class="footer-badge">Co-Teaching Resource</div>
+  </div>
+
+</div>
+</div>
+    </section>
+
+    <!-- SCREEN 8 — Build a Better Prompt (dual-path widget) -->
+    <section class="screen" data-title="9. Build a Better Prompt" data-section="Section 2">
+      <div class="kicker">Section 2 &middot; Try It Yourself</div>
+      <h2>Build a Better Prompt</h2>
+      <p class="lede">Choose how you'd like to practice. Both paths teach the same skill: narrowing a vague request into a prompt specific enough to produce a usable SMART goal draft.</p>
+
+      <!-- PATH SELECTOR -->
+      <div class="path-select">
+        <div class="path-card active" id="cardCoach" onclick="selectPath('coach')" tabindex="0" role="button" aria-pressed="true">
+          <h3>🧭 Practice Here (Guided Coach)</h3>
+          <p>Get instant, structured feedback on your prompt before you ever leave this page. No account needed.</p>
+        </div>
+        <div class="path-card" id="cardExternal" onclick="selectPath('external')" tabindex="0" role="button" aria-pressed="false">
+          <h3>🤖 Try It in Real AI</h3>
+          <p>Open ChatGPT or Claude in a new tab and test your prompt against an actual AI tool.</p>
+        </div>
+      </div>
+
+      <!-- PATH 1: Guided Coach -->
+      <div class="path-panel active" id="panelCoach">
+        <label for="coachInput" style="font-weight:bold;display:block;margin-bottom:0.4rem;">Type a prompt you'd use to ask AI for help drafting an IEP goal:</label>
+        <textarea id="coachInput" placeholder='Example starting point: "Write an IEP goal for a student who struggles with reading."'></textarea>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="checkPrompt()">Check My Prompt</button>
+          <button class="btn btn-ghost" onclick="loadWeakExample()">Load a Weak Example</button>
+          <button class="btn btn-ghost" onclick="loadStrongExample()">Load a Strong Example</button>
+        </div>
+        <div id="coachResults" style="display:none;margin-top:1rem;">
+          <div class="score-banner" id="scoreBanner"></div>
+          <div class="checklist-result" id="checklistResultCoach"></div>
+          <div class="example-box" id="exampleBox"></div>
+        </div>
+      </div>
+
+      <!-- PATH 2: Real AI -->
+      <div class="path-panel" id="panelExternal">
+        <div class="external-card">
+          <h3 style="font-size:1rem;color:var(--primary);margin-bottom:0.5rem;">Step 1: Write your prompt below</h3>
+          <div class="copy-row">
+            <textarea id="externalPromptInput">Write a SMART IEP goal for a 9th-grade student who currently identifies the main idea of a short passage with 40% accuracy (3 of 5 trials) and needs to reach 80% accuracy by the next annual review.</textarea>
+            <button class="btn btn-secondary" onclick="copyPrompt()">Copy Prompt</button>
+          </div>
+          <span class="copy-confirm" id="copyConfirm">Copied! Now paste it into ChatGPT or Claude.</span>
+        </div>
+        <div class="external-card">
+          <h3 style="font-size:1rem;color:var(--primary);margin-bottom:0.4rem;">Step 2: Open a real AI tool (opens in a new tab)</h3>
+          <p style="font-size:0.85rem;color:var(--muted);margin:0 0 0.7rem;">Remember: never enter a real student's name or identifying details. Use de-identified or made-up details only, exactly like the example above.</p>
+          <div class="external-buttons">
+            <a href="https://chatgpt.com" target="_blank" rel="noopener noreferrer"><button class="btn btn-primary">Open ChatGPT &rarr;</button></a>
+            <a href="https://claude.ai" target="_blank" rel="noopener noreferrer"><button class="btn btn-primary">Open Claude &rarr;</button></a>
+          </div>
+        </div>
+        <div class="external-card">
+          <h3 style="font-size:1rem;color:var(--primary);margin-bottom:0.3rem;">Step 3: Reflect</h3>
+          <p style="font-size:0.85rem;color:var(--muted);margin:0 0 0.5rem;">After trying your prompt in a real AI tool, what would you change about it to make the output more specific or more measurable?</p>
+          <textarea placeholder="Type your reflection here..."></textarea>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCREEN 9 — Bring Your Own Goal -->
+    <section class="screen" data-title="10. Check Your Own Goal" data-section="Section 2">
+      <div class="kicker">Section 2 &middot; Apply It to Your Own Goal</div>
+      <h2>Check One of Your Own IEP Goals</h2>
+      <p class="lede" style="margin-bottom:1rem;">Before this session, you were asked to bring one current goal you've written. Remove the student's name and any identifying details, then paste it below and run it through the checklist.</p>
+
+      <label for="ownGoalInput" style="font-weight:bold;display:block;margin-bottom:0.4rem;">Your goal (de-identified):</label>
+      <textarea id="ownGoalInput" placeholder="Paste your IEP goal here. Remove the student's name and any identifying details."></textarea>
+
+      <div class="checklist" id="smartChecklist" style="margin-top:1.1rem;">
+        <label class="checklist-item"><input type="checkbox" onchange="updateChecklistTally()"><span><strong>Specific</strong> &mdash; names the exact skill and the condition it's performed under</span></label>
+        <label class="checklist-item"><input type="checkbox" onchange="updateChecklistTally()"><span><strong>Measurable</strong> &mdash; includes a number and a way to track progress</span></label>
+        <label class="checklist-item"><input type="checkbox" onchange="updateChecklistTally()"><span><strong>Achievable</strong> &mdash; the target is realistic given the student's current baseline</span></label>
+        <label class="checklist-item"><input type="checkbox" onchange="updateChecklistTally()"><span><strong>Relevant</strong> &mdash; tied to a documented, actual area of need</span></label>
+        <label class="checklist-item"><input type="checkbox" onchange="updateChecklistTally()"><span><strong>Time-bound</strong> &mdash; states when progress will be checked</span></label>
+      </div>
+
+      <div class="card" id="tallyBox" style="margin-top:1rem;">
+        <strong id="tallyText">0 of 5 criteria checked</strong>
+        <div style="font-size:0.85rem;color:var(--muted);margin-top:0.2rem;" id="tallySub">Check each box as you confirm your goal meets that criterion.</div>
+      </div>
+
+      <button class="btn-generate" style="margin-top:1rem;" onclick="sendChecklist()">Send My Checklist &rarr;</button>
+      <div class="feedback" id="checklistConfirm" aria-live="polite">Your email app will open with your goal and checklist results pre-filled to send to your facilitator.</div>
+      <p style="font-size:0.8rem;color:var(--muted);font-style:italic;margin-top:0.6rem;">[DATA COLLECTION PLACEHOLDER: this draft sends results by email. A final version could route this to a Google Form, Microsoft Form, or LMS gradebook instead.]</p>
+    </section>
+
+    <!-- SCREEN 10 — Formative Check 2 -->
+    <section class="screen" data-title="11. Quick Check: Spot the Problem" data-section="Section 2 Check">
+      <div class="kicker">Formative Check 2 of 3</div>
+      <h2>Quick Check: Spot the Problem</h2>
+      <div class="quiz-question">An AI tool drafts this goal: <em>&ldquo;By the next annual review, the student will improve organizational skills as measured by teacher observation.&rdquo;</em></div>
+      <p style="font-weight:bold;margin-bottom:0.6rem;">Which SMART component is missing or weak in this goal?</p>
+      <div class="options" id="quiz2" role="radiogroup" aria-label="Quiz question 2">
+        <label class="option"><input type="radio" name="q2" value="A"> Specific and Measurable &mdash; there's no baseline, no number, and "organizational skills" isn't defined.</label>
+        <label class="option"><input type="radio" name="q2" value="B"> Time-bound &mdash; the goal has no deadline.</label>
+        <label class="option"><input type="radio" name="q2" value="C"> Relevant &mdash; organizational skills aren't an appropriate IEP target.</label>
+        <label class="option"><input type="radio" name="q2" value="D"> Nothing &mdash; this goal meets all five criteria.</label>
+      </div>
+      <button class="btn-check" onclick="checkQuiz('quiz2','A','fb2')">Check Answer</button>
+      <div class="feedback" id="fb2" aria-live="polite"></div>
+    </section>
+
+    <!-- SCREEN 12 — Legal A -->
+    <section class="screen" data-title="12. Why This Is a Legal Issue" data-section="Legal Guidelines">
+      <div class="kicker">Legal Guidelines &middot; Before You Continue</div>
+      <h2>Why This Is a Legal Issue, Not Just a Style Choice</h2>
+      <ul class="bullets" style="font-size:1rem;">
+        <li>IDEA requires every goal to be individualized to the actual student &mdash; not generic, not boilerplate, and not pulled unedited from a goal bank.</li>
+        <li>Recent research on AI-assisted IEPs found that tools generating full goals from very little student-specific information likely don't meet that individualization requirement unless the team substantially edits the output (Center for Democracy &amp; Technology, 2025).</li>
+        <li>Policy is moving fast and varies by state. Georgia's 2025 state guidance, for example, already flags AI-written IEP goals as too high-risk for the technology's current reliability.</li>
+      </ul>
+      <div class="card-warn" style="margin-top:1.1rem;">
+        <strong>Know before you draft:</strong> check your state and district's current AI policy before you start. This module can walk you through good practice, but it can't tell you what your specific policy allows.
+      </div>
+<div class="tools-infographic" style="margin-top:1.2rem;border-radius:10px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.1);">
+<div class="infographic">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-inner">
+      <div class="header-eyebrow">AI-Assisted IEP Goal Writing &nbsp;·&nbsp; Legal Awareness</div>
+      <h1>AI IEP Goal Tools: Popular, Powerful,<br>and Legally Risky Without Training</h1>
+      <p class="header-sub">Teachers increasingly turn to these platforms to save time on IEP paperwork — and that instinct is understandable. But none of these tools carry your legal responsibility for individualization. That responsibility stays with the team.</p>
+    </div>
+  </div>
+
+  <!-- TOOL GRID -->
+  <div class="tools-section">
+    <div class="tools-label">10 Tools Teachers Are Currently Using</div>
+    <div class="tools-grid">
+
+      <div class="tool-card focus">
+        <div class="tool-name">Playground IEP</div>
+        <div class="tool-type">Full IEP drafting &amp; caseload management</div>
+        <div class="risk-dot"></div>
+      </div>
+
+      <div class="tool-card">
+        <div class="tool-name">FLINT</div>
+        <div class="tool-type">AI assistant built for special educators</div>
+        <div class="risk-dot"></div>
+      </div>
+
+      <div class="tool-card focus">
+        <div class="tool-name">Monsha AI</div>
+        <div class="tool-type">Full IEP generator — PLAAFP to goals to services</div>
+        <div class="risk-dot"></div>
+      </div>
+
+      <div class="tool-card">
+        <div class="tool-name">Varsity Tutors</div>
+        <div class="tool-type">Academic SMART goal generator</div>
+        <div class="risk-dot"></div>
+      </div>
+
+      <div class="tool-card">
+        <div class="tool-name">Teachquill</div>
+        <div class="tool-type">AI writing assistant for educators</div>
+        <div class="risk-dot"></div>
+      </div>
+
+      <div class="tool-card">
+        <div class="tool-name">Progress Learning</div>
+        <div class="tool-type">Standards-aligned learning platform with goal tools</div>
+        <div class="risk-dot"></div>
+      </div>
+
+      <div class="tool-card focus">
+        <div class="tool-name">Lernico AI</div>
+        <div class="tool-type">SMART goal generator with IDEA guidance</div>
+        <div class="risk-dot"></div>
+      </div>
+
+      <div class="tool-card">
+        <div class="tool-name">Brisk Teaching</div>
+        <div class="tool-type">Fast, no-login goal draft generator</div>
+        <div class="risk-dot"></div>
+      </div>
+
+      <div class="tool-card focus">
+        <div class="tool-name">Goalbook</div>
+        <div class="tool-type">Goal bank &amp; IEP planning platform</div>
+        <div class="risk-dot"></div>
+      </div>
+
+      <div class="tool-card">
+        <div class="tool-name">EZducate</div>
+        <div class="tool-type">AI-powered IEP goal &amp; report generator</div>
+        <div class="risk-dot"></div>
+      </div>
+
+    </div>
+
+    <div style="display:flex;align-items:center;gap:0.5rem;font-size:0.72rem;color:var(--muted);">
+      <div style="width:10px;height:10px;border-radius:50%;background:var(--warn);flex-shrink:0;"></div>
+      Every tool above carries the same four risks when used without a structured team review process.
+      &nbsp;|&nbsp;
+      <div style="width:10px;height:10px;border-radius:2px;background:var(--p2);opacity:0.4;flex-shrink:0;"></div>
+      Highlighted tools include full IEP drafting, not just goal generation.
+    </div>
+  </div>
+
+  <!-- RISK SECTION -->
+  <div class="risk-section">
+    <div class="risk-header">
+      <div class="risk-icon-circle">!</div>
+      <div class="risk-title">What None of These Tools Can Do For You</div>
+    </div>
+    <div class="risks-grid">
+
+      <div class="risk-item">
+        <div class="risk-item-title">⚠ The Template Trap</div>
+        <div class="risk-item-body">AI models generate goals by pattern-matching across large datasets. The output looks professional and SMART-structured, but it may be nearly identical to goals generated for other students with similar diagnoses — violating IDEA's individualization requirement.</div>
+      </div>
+
+      <div class="risk-item">
+        <div class="risk-item-title">⚠ The Privacy Catch-22</div>
+        <div class="risk-item-body">Entering real student names, ID numbers, or behavioral history into any web-based tool risks a FERPA violation. But stripping that data to protect privacy produces more generic output — requiring more team editing, not less.</div>
+      </div>
+
+      <div class="risk-item">
+        <div class="risk-item-title">⚠ Hallucinated Metrics</div>
+        <div class="risk-item-body">AI frequently generates vague or unmeasurable language — "will show improved confidence" or "will demonstrate better engagement." These goals cannot be tracked objectively, leaving the district legally exposed at any compliance review.</div>
+      </div>
+
+      <div class="risk-item">
+        <div class="risk-item-title">⚠ Algorithmic Bias</div>
+        <div class="risk-item-body">AI tools trained on historical data can reproduce existing disparities — recommending more restrictive placements or lower-expectation goals for English language learners, minority students, or neurodivergent students based on patterns rather than the actual child.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- CATCH-22 CALLOUT -->
+  <div class="catchall">
+    <div class="catch-icon">💡</div>
+    <div class="catch-body">
+      <strong>Every one of these tools says the same thing in its fine print:</strong> AI-generated goals are a starting point. Your professional judgment and knowledge of the student are essential to finalize goals before the IEP meeting. The tools know their own limitation — the question is whether the user does too.
+    </div>
+  </div>
+
+  <!-- LEGAL REMINDER -->
+  <div class="legal">
+    <div class="legal-icon">⚖</div>
+    <div class="legal-text">
+      <strong>IDEA Reminder:</strong> The tool that generates the draft does not determine compliance — the team that reviews, verifies, and finalizes it does. Using any of these platforms responsibly means treating every output as a first draft and running it through a structured co-teaching review workflow before it becomes part of a student's IEP.
+    </div>
+  </div>
+
+  <!-- BASE FOOTER -->
+  <div class="footer">
+    <div class="footer-title"><strong>AI-Assisted IEP Goal Writing for Co-Teaching Teams</strong> &nbsp;·&nbsp; Professional Development Module</div>
+    <div class="footer-badge">Legal Awareness Resource</div>
+  </div>
+
+</div>
+</div>
+    </section>
+
+    <!-- SCREEN 13 — Legal B -->
+    <section class="screen" data-title="13. AI Can Assist. AI Cannot Decide." data-section="Legal Guidelines">
+      <div class="kicker">Legal Guidelines</div>
+      <h2>AI Can Assist. AI Cannot Decide.</h2>
+      <ul class="bullets" style="font-size:1rem;">
+        <li>The IEP team &mdash; not a tool &mdash; is legally and ethically responsible for every goal. That responsibility can't be delegated to software.</li>
+        <li>Treat every AI draft as a first draft, never the final word: verify it against the student's real present-level data, then revise it as a team.</li>
+        <li>Never enter a student's name or other identifying details into an AI tool.</li>
+        <li>Tell families when AI was used to help draft a goal &mdash; ideally before the IEP meeting, not after.</li>
+      </ul>
+      <div class="card" style="margin-top:1.1rem;">
+        <strong>This is exactly why the next section matters.</strong> The review workflow you're about to learn &mdash; verify data, check compliance, revise together, both partners sign off &mdash; is what keeps an AI-assisted goal legally defensible.
+      </div>
+      <p style="font-size:0.78rem;color:var(--muted);font-style:italic;margin-top:0.9rem;">Sources: Center for Democracy &amp; Technology (2025); Georgia Department of Education (2025); U.S. Department of Education (2025).</p>
+<div class="card" style="margin-top:1.1rem;text-align:center;padding:1.2rem;">
+  <p style="font-size:0.85rem;color:var(--muted);font-style:italic;margin-bottom:0.6rem;">Coleman &amp; Waterfield (2026) — Ethical AI Use in IEP Development: A Guiding Framework</p>
+  <a href="https://ciddl.org/navigating-ai-in-iep-development-a-framework-for-ethical-practice/" target="_blank" rel="noopener noreferrer" style="color:var(--primary);font-weight:bold;font-size:0.9rem;">View the Full Framework at CIDDL.org &rarr;</a>
+</div>
+    </section>
+
+    <!-- SCREEN 14 — Workflow -->
+    <section class="screen" data-title="14. The Co-Teaching Review Workflow" data-section="Section 3">
+      <div class="kicker">Section 3 &middot; Co-Teaching Review Workflow</div>
+      <h2>Five Steps, Two Sign-Offs</h2>
+      <div class="workflow">
+        <div class="wf-step"><div class="icon-circle">${ICON_ROBOT}</div><div class="num">1</div><div class="lbl">Draft</div><p>One partner enters student data and generates an AI draft</p></div>
+        <div class="wf-step"><div class="icon-circle">${ICON_CHECK}</div><div class="num">2</div><div class="lbl">Verify Data</div><p>Both partners confirm the baseline and target match the student's real records</p></div>
+        <div class="wf-step"><div class="icon-circle">${ICON_CLIPBOARD}</div><div class="num">3</div><div class="lbl">Check Compliance</div><p>Confirm the goal meets IDEA and state requirements</p></div>
+        <div class="wf-step"><div class="icon-circle">${ICON_SYNC}</div><div class="num">4</div><div class="lbl">Revise Together</div><p>Edit language, benchmarks, and conditions as a team</p></div>
+        <div class="wf-step"><div class="icon-circle">${ICON_CHECK}</div><div class="num">5</div><div class="lbl">Finalize</div><p>Both partners sign off before the goal goes into the IEP draft</p></div>
+      </div>
+    </section>
+
+    <!-- SCREEN 11 — Workflow in Practice -->
+    <section class="screen" data-title="15. The Workflow in Practice" data-section="Section 3">
+      <div class="kicker">Section 3 &middot; Co-Teaching Review Workflow</div>
+      <h2>Putting It Together — Before You Move On</h2>
+      <p style="font-size:0.95rem;margin-bottom:1rem;">You've now seen the five steps and why each one matters legally. Before the formative check, take two minutes with your co-teaching partner and discuss these questions:</p>
+
+      <div class="card" style="margin-bottom:0.8rem;">
+        <h3 style="font-size:1rem;color:var(--primary);margin-bottom:0.6rem;">Reflection Questions</h3>
+        <ul class="bullets">
+          <li>In your current practice, which step in this workflow do you and your partner most often skip or rush — and why?</li>
+          <li>Think of a goal you've written recently. If you ran it through this five-step process right now, which step would it most likely fail?</li>
+          <li>Who in your building would need to be involved if you wanted to adopt this workflow for all AI-assisted goals on your caseload?</li>
+        </ul>
+      </div>
+
+      <div class="card" style="border-left:4px solid var(--secondary);">
+        <p style="margin:0;font-size:0.9rem;color:var(--ink);line-height:1.55;"><strong>Remember:</strong> The five-step workflow is not bureaucratic overhead — it's what keeps an AI-assisted goal legally defensible. Every step has a specific job. Draft without the team's data check, and you have a template. Run it through all five steps, and you have an individualized, IDEA-compliant goal.</p>
+      </div>
+    </section>
+
+    <!-- SCREEN 12 — Matching -->
+    <section class="screen" data-title="16. Quick Check: Match the Step" data-section="Section 3 Check">
+      <div class="kicker">Formative Check 3 of 3</div>
+      <h2>Quick Check: Match the Step</h2>
+      <p class="lede">Click a step on the left, then click its matching description on the right.</p>
+      <div class="match-wrap" id="matchWrap"></div>
+      <p class="match-status" id="matchStatus">0 of 5 matched</p>
+    </section>
+
+    <!-- SCREEN 13 — Summative overview -->
+    <section class="screen" data-title="17. Final Task: Draft and Defend a SMART Goal" data-section="Final Task">
+      <div class="kicker">Summative Assessment</div>
+      <h2>Draft and Defend a SMART Goal</h2>
+      <div class="row">
+        <div class="icon-circle">${ICON_CLIPBOARD}</div>
+        <div>
+          <h3>Your task:</h3>
+          <ul class="bullets">
+            <li>Use the AI tool of your choice to draft an IEP goal from the student data packet provided.</li>
+            <li>Apply the 5-step review workflow from Section 3 with your co-teaching partner.</li>
+            <li>Submit your final goal along with a short written explanation of what you changed from the AI's first draft and why.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="card"><strong style="color:var(--primary);">Estimated time: 10 minutes</strong></div>
+        <div class="card"><strong style="color:var(--primary);">Scored using the rubric on the next screen</strong></div>
+      </div>
+    </section>
+
+    <!-- SCREEN 14 — Scoring guide -->
+    <section class="screen" data-title="18. Scoring Guide" data-section="Final Task">
+      <div class="kicker">Summative Assessment</div>
+      <h2>Scoring Guide</h2>
+      <table class="rubric">
+        <tr><th>Criteria</th><th>Meets Expectations</th><th>Needs Revision</th></tr>
+        <tr><td><strong>SMART Criteria</strong></td><td>Goal meets all 5 components</td><td>One or more components missing or unclear</td></tr>
+        <tr><td><strong>Data Accuracy</strong></td><td>Baseline and target match the student's records</td><td>Numbers don't match the records or weren't verified</td></tr>
+        <tr><td><strong>Compliance</strong></td><td>Goal language meets IDEA / state requirements</td><td>Required language elements are missing</td></tr>
+        <tr><td><strong>Team Reflection</strong></td><td>Explanation clearly names what changed from the AI draft and why</td><td>Explanation is vague, generic, or missing</td></tr>
+      </table>
+    </section>
+
+    <!-- SCREEN 15 — Wrap-up -->
+    <section class="screen" data-title="19. Key Takeaways" data-section="Wrap-Up">
+      <div class="kicker">Before You Go</div>
+      <h2>Key Takeaways</h2>
+      <ul class="bullets" style="font-size:1.02rem;margin-bottom:1.3rem;">
+        <li>AI can speed up your first draft &mdash; it can't replace your knowledge of the student.</li>
+        <li>Every AI-drafted goal needs a human check against real data before it's final.</li>
+        <li>The 5-step workflow gives co-teaching teams a shared process, not just a shared document.</li>
+        <li>Legal responsibility stays with the IEP team regardless of which tool generated the draft.</li>
+      </ul>
+
+      <div class="card" style="margin-bottom:1rem;">
+        <div class="row" style="margin-bottom:0.5rem;">
+          <div class="icon-circle" style="width:34px;height:34px;">${ICON_BOOK}</div>
+          <h3 style="margin-top:0.3rem;">Want to Go Deeper?</h3>
+        </div>
+        <p style="font-size:0.88rem;color:var(--muted);margin-bottom:0.8rem;">Coleman and Waterfield's six-principle framework gives your team a complete decision tree for ethical AI use in IEP development. The 22-minute recorded presentation walks through every principle in detail.</p>
+        <div style="display:flex;gap:0.8rem;flex-wrap:wrap;">
+          <a href="https://www.youtube.com/watch?v=yaSC-J0iAq0" target="_blank" rel="noopener noreferrer" style="color:var(--primary);font-weight:bold;font-size:0.88rem;">Watch the Presentation (22 min) &rarr;</a>
+          <a href="https://ciddl.org/navigating-ai-in-iep-development-a-framework-for-ethical-practice/" target="_blank" rel="noopener noreferrer" style="color:var(--primary);font-weight:bold;font-size:0.88rem;">Read the Full Framework &rarr;</a>
+        </div>
+      </div>
+
+      <div class="card resource-block">
+        <div class="row" style="margin-bottom:0.5rem;">
+          <div class="icon-circle" style="width:34px;height:34px;">${ICON_BOOK}</div>
+          <h3 style="margin-top:0.3rem;">Free Resources</h3>
+        </div>
+        <ul class="bullets" style="font-size:0.9rem;">
+          <li><a href="https://youtu.be/LvBfxxbDdW4" target="_blank" rel="noopener noreferrer" style="color:var(--primary);font-weight:bold;">AI for IEP Goals</a> &mdash; Kevin Cunningham, School-Based SLP. A short walkthrough showing how to prompt an AI tool using a student's present level of performance.</li>
+          <li><a href="https://www.teacherspayteachers.com/Product/Free-AI-Prompts-for-Writing-IEP-Goals-Special-Education-Speech-Therapy-OT-14376878" target="_blank" rel="noopener noreferrer" style="color:var(--primary);font-weight:bold;">Free AI Prompt Templates for IEP Goals</a> &mdash; Kevin Cunningham. Ready-to-use prompt templates for teachers, SLPs, and OTs. Free individual download from Teachers Pay Teachers.</li>
+          <li>IDEA goal-writing quick guide (district link &mdash; add yours here)</li>
+          <li>District AI-tool use guidance for staff (add your district's link here)</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SCREEN 16 — Help & Access -->
+    <section class="screen" data-title="20. Help and Access" data-section="Support">
+      <div class="kicker">Support &amp; Accessibility</div>
+      <h2>Help and Access</h2>
+      <div class="row">
+        <div class="icon-circle">${ICON_LIFE}</div>
+        <div><h3>Technical Support</h3><p>Contact your building's instructional technology coach, or [support email placeholder], for help accessing this module.</p></div>
+      </div>
+      <div class="row">
+        <div class="icon-circle">${ICON_CHECK}</div>
+        <div><h3>Accessibility</h3><p>All videos include captions and transcripts. All images include alt text. The full module can be navigated by keyboard alone.</p></div>
+      </div>
+      <div class="row">
+        <div class="icon-circle">${ICON_LOCK}</div>
+        <div><h3>Privacy</h3><p>This module does not collect or store student-identifying information. Use the practice data provided &mdash; do not enter real student names or ID numbers.</p></div>
+      </div>
+    </section>
+
+    <!-- SCREEN 18 — Feedback -->
+    <section class="screen" data-title="21. Module Feedback" data-section="Feedback">
+      <div class="kicker">Before You Close This Tab</div>
+      <h2>Tell Us What Would Make This Better</h2>
+      <p class="lede">Your feedback helps us improve this module for the next group. This takes about 2 minutes.</p>
+
+      <p style="font-weight:bold;margin-bottom:0.3rem;">Overall, how useful was this module?</p>
+      <div class="rating" id="ratingWidget" role="radiogroup" aria-label="Overall usefulness rating, 1 to 5">
+        <button type="button" data-val="1" onclick="selectRating(1)" aria-label="1 - not useful">1</button>
+        <button type="button" data-val="2" onclick="selectRating(2)" aria-label="2">2</button>
+        <button type="button" data-val="3" onclick="selectRating(3)" aria-label="3">3</button>
+        <button type="button" data-val="4" onclick="selectRating(4)" aria-label="4">4</button>
+        <button type="button" data-val="5" onclick="selectRating(5)" aria-label="5 - very useful">5</button>
+      </div>
+
+      <label for="feedbackComments" style="font-weight:bold;display:block;margin-bottom:0.4rem;">What's one thing you'd add, remove, or change?</label>
+      <textarea id="feedbackComments" placeholder="Type your feedback here..."></textarea>
+
+      <button class="btn-generate" style="margin-top:1rem;" onclick="sendFeedback()">Send Feedback &rarr;</button>
+      <div class="feedback" id="feedbackConfirm" aria-live="polite">Thanks &mdash; your email app will open with your feedback pre-filled to send to your facilitator.</div>
+      <p style="font-size:0.8rem;color:var(--muted);font-style:italic;margin-top:0.6rem;">[DATA COLLECTION PLACEHOLDER: this draft sends results by email. A final version could route this to a Google Form, Microsoft Form, or LMS gradebook instead.]</p>
+    </section>
+
+  </main>
+
+  <footer class="navbar">
+    <button class="nav-btn ghost" id="backBtn" onclick="goTo(currentScreen-1)">&larr; Back</button>
+    <span class="pos" id="posLabel"></span>
+    <button class="nav-btn" id="nextBtn" onclick="goTo(currentScreen+1)">Next &rarr;</button>
+  </footer>
+</div>
+
+<script>
+/* ---------------- icons (inline SVG, stroke-based) ---------------- */
+const ICONS = {
+  ICON_TARGET:  '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2" fill="#fff"/></svg>',
+  ICON_ROBOT:   '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="5" y="9" width="14" height="10" rx="2"/><circle cx="9" cy="14" r="1.2" fill="#fff" stroke="none"/><circle cx="15" cy="14" r="1.2" fill="#fff" stroke="none"/><path d="M12 9V5M9 5h6"/></svg>',
+  ICON_CHECK:   '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/></svg>',
+  ICON_X:       '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4"><circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6"/></svg>',
+  ICON_LIST:    '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M9 6h10M9 12h10M9 18h10"/><circle cx="5" cy="6" r="1.1" fill="#fff" stroke="none"/><circle cx="5" cy="12" r="1.1" fill="#fff" stroke="none"/><circle cx="5" cy="18" r="1.1" fill="#fff" stroke="none"/></svg>',
+  ICON_SYNC:    '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3"/><path d="M18 4v4h-4M6 20v-4h4"/></svg>',
+  ICON_CLIPBOARD:'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"/><path d="M9 13l2 2 4-4"/></svg>',
+  ICON_IMAGE:   '<svg viewBox="0 0 24 24" fill="none" stroke="#9AA9A9" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M3 17l5-5 4 4 3-3 6 6"/></svg>',
+  ICON_PLAY:    '<svg viewBox="0 0 24 24" fill="none" stroke="#9AA9A9" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M10 9l5 3-5 3z" fill="#9AA9A9" stroke="none"/></svg>',
+  ICON_HEADPHONES:'<svg viewBox="0 0 24 24" fill="none" stroke="#9AA9A9" stroke-width="1.8"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="3" y="14" width="4" height="6" rx="1.3"/><rect x="17" y="14" width="4" height="6" rx="1.3"/></svg>',
+  ICON_FILE:    '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M7 3h7l4 4v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v4h4M9 13h6M9 17h6"/></svg>',
+  ICON_CC:      '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M9 11.5c-.5-.7-1.2-1-2-1-1.2 0-2.2 1-2.2 2.5S5.8 15.5 7 15.5c.8 0 1.5-.3 2-1M17 11.5c-.5-.7-1.2-1-2-1-1.2 0-2.2 1-2.2 2.5s1 2.5 2.2 2.5c.8 0 1.5-.3 2-1"/></svg>',
+  ICON_BOOK:    '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M3 5.5c2-1 5-1 8 0v14c-3-1-6-1-8 0z"/><path d="M21 5.5c-2-1-5-1-8 0v14c3-1 6-1 8 0z"/></svg>',
+  ICON_LIFE:    '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="M5.5 5.5l3 3M15.5 5.5l-3 3M5.5 18.5l3-3M15.5 18.5l-3-3"/></svg>',
+  ICON_LOCK:    '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>',
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+  // inject icons into placeholders that reference ${ICON_X} style tokens
+  document.querySelectorAll('main').forEach(el => {
+    let html = el.innerHTML;
+    Object.keys(ICONS).forEach(key => {
+      html = html.split('${' + key + '}').join(ICONS[key]);
+    });
+    el.innerHTML = html;
+  });
+  buildJumpNav();
+  buildMatching();
+  updateUI();
+});
+
+/* ---------------- navigation ---------------- */
+const TOTAL = 21;
+let currentScreen = 0; // zero-indexed
+const PRETEST_SKIP_TARGET = 11; // zero-indexed: Screen 12, "Why This Is a Legal Issue"
+
+/* ---------------- pretest ---------------- */
+const PRETEST_ANSWERS = { pre1: 'B', pre2: 'B', pre3: 'B', pre4: 'C' };
+
+function scorePretest(){
+  let score = 0;
+  Object.keys(PRETEST_ANSWERS).forEach(name => {
+    const sel = document.querySelector('input[name="' + name + '"]:checked');
+    if (sel && sel.value === PRETEST_ANSWERS[name]) score++;
+  });
+  document.getElementById('pretestScoreText').textContent = score + ' of 4 correct';
+  document.getElementById('pretestMsg').textContent = (score >= 3)
+    ? "You're tracking well with this material. If you'd like, skip ahead to the legal guidelines and review workflow \u2014 or go through everything if you prefer a full refresher."
+    : "We'd recommend working through the full module so this all clicks \u2014 but it's your call.";
+  document.getElementById('pretestResult').style.display = 'block';
+}
+
+function buildJumpNav(){
+  const sel = document.getElementById('jumpNav');
+  document.querySelectorAll('.screen').forEach((s, i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = s.dataset.title;
+    sel.appendChild(opt);
+  });
+  sel.addEventListener('change', (e) => goTo(parseInt(e.target.value, 10)));
+}
+
+function goTo(index){
+  if(index < 0 || index >= TOTAL) return;
+  currentScreen = index;
+  document.querySelectorAll('.screen').forEach((s, i) => {
+    if (i === index) s.classList.add('active'); else s.classList.remove('active');
+  });
+  updateUI();
+  document.getElementById('main').scrollTop = 0;
+  window.scrollTo({top:0, behavior:'instant'});
+  const heading = document.querySelectorAll('.screen')[index].querySelector('h1,h2');
+  if(heading){ heading.setAttribute('tabindex','-1'); heading.focus(); }
+}
+
+function updateUI(){
+  const screens = document.querySelectorAll('.screen');
+  const current = screens[currentScreen];
+  const pct = ((currentScreen + 1) / TOTAL) * 100;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressBar').setAttribute('aria-valuenow', currentScreen + 1);
+  document.getElementById('screenLabel').textContent = current.dataset.section + ' \u2022 Screen ' + (currentScreen+1) + ' of ' + TOTAL;
+  document.getElementById('posLabel').textContent = 'Screen ' + (currentScreen+1) + ' of ' + TOTAL;
+  document.getElementById('jumpNav').value = currentScreen;
+  document.getElementById('backBtn').disabled = currentScreen === 0;
+  const nextBtn = document.getElementById('nextBtn');
+  nextBtn.disabled = currentScreen === TOTAL - 1;
+  nextBtn.textContent = currentScreen === TOTAL - 1 ? 'End of Module' : 'Next \u2192';
+}
+
+/* ---------------- bring-your-own-goal checklist ---------------- */
+const CRITERIA = ['Specific','Measurable','Achievable','Relevant','Time-bound'];
+
+function updateChecklistTally(){
+  const boxes = document.querySelectorAll('#smartChecklist input');
+  const checked = document.querySelectorAll('#smartChecklist input:checked').length;
+  const tallyText = document.getElementById('tallyText');
+  const tallySub = document.getElementById('tallySub');
+  tallyText.textContent = checked + ' of 5 criteria checked';
+  if(checked === 5){
+    tallySub.textContent = 'Strong SMART goal \u2014 nice work.';
+  } else if(checked === 0){
+    tallySub.textContent = 'Check each box as you confirm your goal meets that criterion.';
+  } else {
+    tallySub.textContent = 'Consider revising the unchecked criteria before finalizing this goal.';
+  }
+}
+
+function sendChecklist(){
+  const goal = document.getElementById('ownGoalInput').value.trim() || '(no goal text entered)';
+  const boxes = document.querySelectorAll('#smartChecklist input');
+  let lines = [];
+  boxes.forEach((b, i) => { lines.push((b.checked ? '[x] ' : '[ ] ') + CRITERIA[i]); });
+  const body = 'My IEP goal:\n' + goal + '\n\nSMART checklist results:\n' + lines.join('\n');
+  const mailto = 'mailto:facilitator@example.edu?subject=' + encodeURIComponent('SMART Checklist Submission') + '&body=' + encodeURIComponent(body);
+  window.location.href = mailto;
+  const fb = document.getElementById('checklistConfirm');
+  fb.classList.add('show', 'good');
+}
+
+/* ---------------- feedback page ---------------- */
+let selectedRating = 0;
+
+function selectRating(n){
+  selectedRating = n;
+  document.querySelectorAll('#ratingWidget button').forEach(btn => {
+    btn.classList.toggle('selected', parseInt(btn.dataset.val, 10) === n);
+  });
+}
+
+function sendFeedback(){
+  const comments = document.getElementById('feedbackComments').value.trim() || '(no comments entered)';
+  const ratingText = selectedRating ? (selectedRating + ' of 5') : 'Not rated';
+  const body = 'Overall usefulness rating: ' + ratingText + '\n\nWhat would improve this module:\n' + comments;
+  const mailto = 'mailto:facilitator@example.edu?subject=' + encodeURIComponent('Module Feedback') + '&body=' + encodeURIComponent(body);
+  window.location.href = mailto;
+  const fb = document.getElementById('feedbackConfirm');
+  fb.classList.add('show', 'good');
+}
+
+/* ---------------- dual-path prompt widget ---------------- */
+function selectPath(path){
+  var coach = path === 'coach';
+  document.getElementById('cardCoach').classList[coach ? 'add' : 'remove']('active');
+  document.getElementById('cardExternal').classList[coach ? 'remove' : 'add']('active');
+  document.getElementById('panelCoach').classList[coach ? 'add' : 'remove']('active');
+  document.getElementById('panelExternal').classList[coach ? 'remove' : 'add']('active');
+}
+
+var PROMPT_CRITERIA = [
+  { label: 'Names a grade level or age', test: function(t){ return /\b(\d{1,2}(st|nd|rd|th)?[\s-]grade|kindergarten|grade\s*\d{1,2})\b/i.test(t); }, hint: 'Add a grade level (e.g., "9th-grade student") so the AI knows the academic context.' },
+  { label: 'Names a specific, observable skill', test: function(t){ return /\b(identif\w*|read\w*|writ\w*|solv\w*|complet\w*|us\w*\s+\w+|calculat\w*)\b/i.test(t) && t.length > 25; }, hint: 'Name the exact skill (e.g., "identify the main idea," not just "improve reading").' },
+  { label: 'Includes a baseline (current performance)', test: function(t){ return /\b(\d{1,3}\s?%|currently|baseline|present level)\b/i.test(t); }, hint: 'Include the student\'s current performance level, like a percentage or trial count (e.g., "currently at 40% accuracy").' },
+  { label: 'Includes a measurable target', test: function(t){ return /\b(\d{1,3}\s?%|out of \d|of \d{1,2}\s+trials|\d\s*\/\s*\d)\b/i.test(t); }, hint: 'State a measurable target, such as a percentage or "4 of 5 trials."' },
+  { label: 'Includes a timeframe', test: function(t){ return /\b(annual review|by the end of|within \d+ weeks?|semester|quarter|iep date)\b/i.test(t); }, hint: 'Add a timeframe, like "by the next annual review," so progress has a checkpoint.' },
+];
+
+function checkPrompt(){
+  var text = document.getElementById('coachInput').value.trim();
+  var resultsBox = document.getElementById('coachResults');
+  var checklistEl = document.getElementById('checklistResultCoach');
+  var scoreBanner = document.getElementById('scoreBanner');
+  var exampleBox = document.getElementById('exampleBox');
+
+  if(!text){
+    checklistEl.innerHTML = '<p style="color:var(--muted);font-style:italic;">Type a prompt above first.</p>';
+    scoreBanner.style.display = 'none';
+    exampleBox.style.display = 'none';
+    resultsBox.style.display = 'block';
+    return;
+  }
+  var passCount = 0;
+  var html = '';
+  PROMPT_CRITERIA.forEach(function(c){
+    var passed = c.test(text);
+    if(passed) passCount++;
+    html += '<div class="check-item"><div class="check-icon ' + (passed ? 'yes' : 'no') + '">' + (passed ? '✓' : '!') + '</div><div class="check-text"><strong>' + c.label + '</strong>' + (passed ? '' : '<span>' + c.hint + '</span>') + '</div></div>';
+  });
+  checklistEl.innerHTML = html;
+  scoreBanner.style.display = 'block';
+  if(passCount >= 4){
+    scoreBanner.className = 'score-banner strong';
+    scoreBanner.textContent = passCount + ' of 5 criteria met \u2014 strong prompt. This should produce a usable, specific draft.';
+  } else {
+    scoreBanner.className = 'score-banner weak';
+    scoreBanner.textContent = passCount + ' of 5 criteria met \u2014 this prompt will likely produce a vague or generic draft. Review the flagged items above.';
+  }
+  exampleBox.style.display = 'block';
+  exampleBox.innerHTML = '<strong>Try a version like this:</strong><br>"Write a SMART IEP goal for a 6th-grade student who currently solves 2-step word problems with 50% accuracy (5 of 10 trials), with a target of 80% accuracy (8 of 10 trials) by the next annual review."';
+  resultsBox.style.display = 'block';
+}
+
+function loadWeakExample(){
+  document.getElementById('coachInput').value = 'Write an IEP goal for a student who struggles with reading.';
+  checkPrompt();
+}
+
+function loadStrongExample(){
+  document.getElementById('coachInput').value = 'Write a SMART IEP goal for a 9th-grade student who currently identifies the main idea of a short passage with 40% accuracy (3 of 5 trials) and needs to reach 80% accuracy by the next annual review.';
+  checkPrompt();
+}
+
+function copyPrompt(){
+  var text = document.getElementById('externalPromptInput').value;
+  var confirm = document.getElementById('copyConfirm');
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(text).then(function(){
+      confirm.classList.add('show');
+      setTimeout(function(){ confirm.classList.remove('show'); }, 3000);
+    });
+  } else {
+    var ta = document.getElementById('externalPromptInput');
+    ta.select();
+    document.execCommand('copy');
+    confirm.classList.add('show');
+    setTimeout(function(){ confirm.classList.remove('show'); }, 3000);
+  }
+}
+
+/* ---------------- quizzes ---------------- */
+function checkQuiz(groupId, correctValue, fbId){
+  const group = document.getElementById(groupId);
+  const selected = group.querySelector('input:checked');
+  const fb = document.getElementById(fbId);
+  if(!selected){
+    fb.className = 'feedback show bad';
+    fb.textContent = 'Select an answer first.';
+    return;
+  }
+  group.querySelectorAll('.option').forEach(opt => {
+    opt.classList.remove('correct','incorrect');
+    const input = opt.querySelector('input');
+    if(input.value === correctValue) opt.classList.add('correct');
+    else if(input.checked) opt.classList.add('incorrect');
+  });
+  if(selected.value === correctValue){
+    fb.className = 'feedback show good';
+  } else {
+    fb.className = 'feedback show bad';
+  }
+  fb.textContent = (groupId === 'quiz1')
+    ? 'Correct answer: B. AI tools don\u2019t know your student\u2019s true baseline. Always verify any number against your data before it goes in the IEP.'
+    : 'Correct answer: A. \u201cImprove organizational skills\u201d isn\u2019t specific or measurable. A stronger version names the exact skill (e.g., using a daily planner) and a measurable target (e.g., 4 of 5 days/week).';
+}
+
+/* ---------------- prompt builder ---------------- */
+function generateDraft(){
+  const box = document.getElementById('aiOutputBox');
+  box.innerHTML = '<strong>AI draft (example output):</strong><br>"By the next annual review, when given a short grade-level passage, the student will identify the main idea with 80% accuracy (4 of 5 trials), as measured by curriculum-based assessment, improved from a baseline of 40% accuracy (3 of 5 trials)."<br><br><em style="color:var(--muted);font-size:0.85rem;">Reminder: confirm this baseline and target against the student\u2019s real data before using it.</em>';
+  document.getElementById('aiOutput').classList.add('show');
+}
+
+/* ---------------- matching activity ---------------- */
+const matchPairs = [
+  { left: 'Draft', right: 'Enter student data and generate an AI draft' },
+  { left: 'Verify Data', right: 'Confirm the baseline matches real student records' },
+  { left: 'Check Compliance', right: 'Confirm the goal meets IDEA/state requirements' },
+  { left: 'Revise Together', right: 'Edit language and benchmarks as a team' },
+  { left: 'Finalize', right: 'Both partners sign off on the final version' },
+];
+let matchedCount = 0;
+let selectedLeftId = null;
+
+function buildMatching(){
+  const wrap = document.getElementById('matchWrap');
+  const lefts = matchPairs.map((p,i)=>({text:p.left, id:i}));
+  const rights = matchPairs.map((p,i)=>({text:p.right, id:i}));
+  // scramble right column order, fixed shuffle for consistency
+  const order = [3,4,2,0,1];
+  const scrambledRights = order.map(i => rights[i]);
+
+  let html = '';
+  lefts.forEach((l, rowIdx) => {
+    html += '<div class="match-row">';
+    html += '<button type="button" class="match-pill left" data-id="'+l.id+'" onclick="selectLeft(this,'+l.id+')">'+l.text+'</button>';
+    html += '<span style="color:var(--dash);">&harr;</span>';
+    const r = scrambledRights[rowIdx];
+    html += '<button type="button" class="match-pill right" data-id="'+r.id+'" onclick="selectRight(this,'+r.id+')">'+r.text+'</button>';
+    html += '</div>';
+  });
+  wrap.innerHTML = html;
+}
+
+function selectLeft(el, id){
+  if(el.classList.contains('matched-correct')) return;
+  document.querySelectorAll('.match-pill.left').forEach(p => p.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedLeftId = id;
+}
+
+function selectRight(el, id){
+  if(el.classList.contains('matched-correct') || selectedLeftId === null) return;
+  const leftEl = document.querySelector('.match-pill.left.selected');
+  if(!leftEl) return;
+  if(parseInt(leftEl.dataset.id,10) === id){
+    leftEl.classList.add('matched-correct');
+    leftEl.classList.remove('selected');
+    el.classList.add('matched-correct');
+    matchedCount++;
+    selectedLeftId = null;
+    document.getElementById('matchStatus').textContent = matchedCount === 5
+      ? 'All matched! Nice work.'
+      : matchedCount + ' of 5 matched';
+  } else {
+    el.classList.add('shake');
+    leftEl.classList.add('shake');
+    setTimeout(()=>{ el.classList.remove('shake'); leftEl.classList.remove('shake'); }, 300);
+  }
+}
+</script>
+</body>
+</html>
